@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import cm
 from openpyxl import load_workbook
+from openpyxl.chart import BarChart, LineChart, Reference
 from openpyxl.drawing.image import Image as XLImage
 
 from .utils import ensure_dir, get_logger
@@ -123,6 +124,8 @@ def export_excel(
     wb = load_workbook(tmp_path)
     if "Frontier_Weights" in wb.sheetnames:
         ws = wb["Frontier_Weights"]
+        header = [cell.value for cell in ws[1]]
+        col_map = {name: idx + 1 for idx, name in enumerate(header) if name}
         start_col = frontier_weights.shape[1] + 2
         ws.cell(row=1, column=start_col, value="Benchmark")
         ws.cell(row=2, column=start_col, value="Ticker")
@@ -137,6 +140,61 @@ def export_excel(
         ws.cell(row=6, column=start_col + 1, value=benchmark.get("volatility"))
         ws.cell(row=7, column=start_col, value="Sharpe")
         ws.cell(row=7, column=start_col + 1, value=benchmark.get("sharpe"))
+        ws.cell(row=8, column=start_col, value="POWER")
+        max_sharpe = None
+        if "Sharpe" in frontier_weights.columns:
+            max_sharpe = pd.to_numeric(frontier_weights["Sharpe"], errors="coerce").max()
+        bench_sharpe = benchmark.get("sharpe")
+        power_value = None
+        if max_sharpe is not None and bench_sharpe:
+            power_value = (max_sharpe / bench_sharpe) - 1
+        power_cell = ws.cell(row=8, column=start_col + 1, value=power_value)
+        power_cell.number_format = "0.00%"
+
+        # Combo chart: bars for SHARP + NORM SHARP, lines for NORM RET + NORM RISK
+        id_col = col_map.get("id")
+        sharp_col = col_map.get("Sharpe")
+        norm_sharp_col = col_map.get("sharpe_norm")
+        norm_ret_col = col_map.get("return_norm")
+        norm_risk_col = col_map.get("risk_norm")
+        if id_col and sharp_col and norm_sharp_col and norm_ret_col and norm_risk_col:
+            max_row = ws.max_row
+            cats = Reference(ws, min_col=id_col, min_row=2, max_row=max_row)
+
+            bar = BarChart()
+            bar.type = "col"
+            bar.title = "Sharpe and Normalized Metrics"
+            bar.y_axis.title = "SHARP"
+            bar.x_axis.title = "Portfolio ID"
+            bar.height = 12
+            bar.width = 22
+
+            bar.y_axis.axId = 100
+            sharp_data = Reference(ws, min_col=sharp_col, min_row=1, max_row=max_row)
+            norm_sharp_data = Reference(ws, min_col=norm_sharp_col, min_row=1, max_row=max_row)
+            bar.add_data(sharp_data, titles_from_data=True)
+            bar.add_data(norm_sharp_data, titles_from_data=True)
+            bar.set_categories(cats)
+
+            line = LineChart()
+            line.y_axis.title = "RETURN OR RISK"
+            line.y_axis.axId = 200
+            line.y_axis.crosses = "max"
+            line.y_axis.majorGridlines = None
+
+            line.y_axis.axId = 200
+            norm_ret_data = Reference(ws, min_col=norm_ret_col, min_row=1, max_row=max_row)
+            norm_risk_data = Reference(ws, min_col=norm_risk_col, min_row=1, max_row=max_row)
+            line.add_data(norm_ret_data, titles_from_data=True)
+            line.add_data(norm_risk_data, titles_from_data=True)
+            line.set_categories(cats)
+
+            bar += line
+            bar.y2_axis = line.y_axis
+            bar.legend.position = "b"
+
+            chart_anchor = ws.cell(row=9, column=start_col)
+            ws.add_chart(bar, chart_anchor.coordinate)
     for sheet_name, fig_path in figures.items():
         if not fig_path.exists():
             continue
@@ -200,7 +258,7 @@ def build_reports(
             "id": portfolio_id,
             "target_return": target,
             "volatility": vol,
-            "return_risk": return_risk,
+            "Sharpe": return_risk,
             "return_norm": (target / benchmark_return) if benchmark_return else np.nan,
             "risk_norm": (vol / benchmark_vol) if benchmark_vol else np.nan,
             "sharpe_norm": (return_risk / benchmark_sharpe) if benchmark_sharpe else np.nan,
