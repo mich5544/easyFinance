@@ -188,12 +188,27 @@ def build_reports(
     mc_top = mc_df.sort_values("sharpe", ascending=False).head(200).copy()
     mc_top["weights"] = mc_top["weights"].apply(lambda w: ",".join(f"{x:.4f}" for x in w))
 
+    benchmark_return = benchmark.get("return") if benchmark else None
+    benchmark_vol = benchmark.get("volatility") if benchmark else None
+    benchmark_sharpe = benchmark.get("sharpe") if benchmark else None
+
     frontier_rows = []
+    portfolio_id = 1
     for target, vol, weights in frontier:
-        row = {"target_return": target, "volatility": vol}
+        return_risk = target / vol if vol else np.nan
+        row = {
+            "id": portfolio_id,
+            "target_return": target,
+            "volatility": vol,
+            "return_risk": return_risk,
+            "return_norm": (target / benchmark_return) if benchmark_return else np.nan,
+            "risk_norm": (vol / benchmark_vol) if benchmark_vol else np.nan,
+            "sharpe_norm": (return_risk / benchmark_sharpe) if benchmark_sharpe else np.nan,
+        }
         for ticker, weight in zip(prices.columns, weights):
             row[ticker] = float(weight)
         frontier_rows.append(row)
+        portfolio_id += 1
     frontier_df = pd.DataFrame(frontier_rows)
 
     export_excel(
