@@ -184,5 +184,11 @@
     "source": "DIRECT",
     "exchange": "",
     "currency": ""
+  },
+  "EQQB.DE": {
+    "yahoo_symbol": "EQQB.DE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
   }
 }
