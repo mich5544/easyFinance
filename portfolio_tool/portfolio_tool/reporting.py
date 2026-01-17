@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import cm
 from openpyxl import load_workbook
-from openpyxl.chart import BarChart, LineChart, Reference
+from openpyxl.chart import BarChart, DoughnutChart, LineChart, Reference
 from openpyxl.drawing.image import Image as XLImage
 
 from .utils import ensure_dir, get_logger
@@ -195,6 +195,21 @@ def export_excel(
 
             chart_anchor = ws.cell(row=9, column=start_col)
             ws.add_chart(bar, chart_anchor.coordinate)
+
+        # Doughnut chart for max Sharpe portfolio weights
+        if "Weights_MaxSharpe" in wb.sheetnames:
+            ws_w = wb["Weights_MaxSharpe"]
+            max_row = ws_w.max_row
+            if max_row >= 2:
+                doughnut = DoughnutChart()
+                doughnut.title = "Max sharpe portfolio"
+                data = Reference(ws_w, min_col=2, min_row=1, max_row=max_row)
+                cats = Reference(ws_w, min_col=1, min_row=2, max_row=max_row)
+                doughnut.add_data(data, titles_from_data=True)
+                doughnut.set_categories(cats)
+                doughnut.height = 10
+                doughnut.width = 14
+                ws.add_chart(doughnut, ws.cell(row=26, column=start_col).coordinate)
     for sheet_name, fig_path in figures.items():
         if not fig_path.exists():
             continue
