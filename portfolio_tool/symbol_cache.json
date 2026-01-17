@@ -1,0 +1,188 @@
+{
+  "SMCI": {
+    "yahoo_symbol": "SMCI",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "IS3N": {
+    "yahoo_symbol": "IS3N.DE",
+    "source": "SUFFIX",
+    "exchange": "",
+    "currency": ""
+  },
+  "EUNN": {
+    "yahoo_symbol": "EUNN.DE",
+    "source": "SUFFIX",
+    "exchange": "",
+    "currency": ""
+  },
+  "AWK": {
+    "yahoo_symbol": "AWK",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "IBCK": {
+    "yahoo_symbol": "IBCK.DE",
+    "source": "SUFFIX",
+    "exchange": "",
+    "currency": ""
+  },
+  "IS31": {
+    "yahoo_symbol": "IS31.DE",
+    "source": "SUFFIX",
+    "exchange": "",
+    "currency": ""
+  },
+  "AIFS": {
+    "yahoo_symbol": "AIFS.DE",
+    "source": "SUFFIX",
+    "exchange": "",
+    "currency": ""
+  },
+  "AIAA": {
+    "yahoo_symbol": "AIAA.L",
+    "source": "SUFFIX",
+    "exchange": "",
+    "currency": ""
+  },
+  "CRWD": {
+    "yahoo_symbol": "CRWD",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "SNOW": {
+    "yahoo_symbol": "SNOW",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "BE": {
+    "yahoo_symbol": "BE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "AVGO": {
+    "yahoo_symbol": "AVGO",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "ANET": {
+    "yahoo_symbol": "ANET",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "2B76": {
+    "yahoo_symbol": "2B76.DE",
+    "source": "SUFFIX",
+    "exchange": "",
+    "currency": ""
+  },
+  "AAPL": {
+    "yahoo_symbol": "AAPL",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "MSFT": {
+    "yahoo_symbol": "MSFT",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "GOOGL": {
+    "yahoo_symbol": "GOOGL",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "IS3N.DE": {
+    "yahoo_symbol": "IS3N.DE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "EUNN.DE": {
+    "yahoo_symbol": "EUNN.DE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "IBCK.DE": {
+    "yahoo_symbol": "IBCK.DE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "IS31.DE": {
+    "yahoo_symbol": "IS31.DE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "AIFS.DE": {
+    "yahoo_symbol": "AIFS.DE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "AIAA.L": {
+    "yahoo_symbol": "AIAA.L",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "2B76.DE": {
+    "yahoo_symbol": "2B76.DE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "EQQB": {
+    "yahoo_symbol": "EQQB.DE",
+    "source": "SUFFIX",
+    "exchange": "",
+    "currency": ""
+  },
+  "NVDA": {
+    "yahoo_symbol": "NVDA",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "PLTR": {
+    "yahoo_symbol": "PLTR",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "PODD": {
+    "yahoo_symbol": "PODD",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "RKLB": {
+    "yahoo_symbol": "RKLB",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "HELP": {
+    "yahoo_symbol": "HELP",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "QUBT": {
+    "yahoo_symbol": "QUBT",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  }
+}
