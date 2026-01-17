@@ -75,7 +75,25 @@ def plot_frontier(frontier: List[Tuple[float, float, np.ndarray]], out_path: Pat
 
 def plot_pie(weights: np.ndarray, labels: List[str], title: str, out_path: Path) -> None:
     fig, ax = plt.subplots(figsize=(7, 5))
-    wedges, _, _ = ax.pie(weights, labels=None, autopct="%1.1f%%", startangle=90)
+    weights = np.asarray(weights, dtype=float)
+    explode = np.where(weights >= 0.1, 0.04, 0.0)
+    colors = plt.cm.tab20.colors[: len(labels)]
+
+    wedges, _, autotexts = ax.pie(
+        weights,
+        labels=None,
+        autopct=lambda p: f"{p:.0f}%" if p >= 3 else "",
+        startangle=90,
+        counterclock=False,
+        explode=explode,
+        colors=colors,
+        wedgeprops={"width": 0.42, "edgecolor": "white"},
+        pctdistance=0.72,
+    )
+    for t in autotexts:
+        t.set_color("#1a1a1a")
+        t.set_fontsize(9)
+
     ax.axis("equal")
     ax.set_title(title)
     ax.legend(
@@ -83,7 +101,7 @@ def plot_pie(weights: np.ndarray, labels: List[str], title: str, out_path: Path)
         labels,
         title="Tickers",
         loc="center left",
-        bbox_to_anchor=(1.0, 0.5),
+        bbox_to_anchor=(1.02, 0.5),
         frameon=False,
     )
     _save_fig(out_path)
