@@ -168,6 +168,19 @@ def export_excel(
             power_value = (max_sharpe / bench_sharpe) - 1
         power_cell = ws.cell(row=8, column=start_col + 1, value=power_value)
         power_cell.number_format = "0.00%"
+        ws.cell(row=9, column=start_col, value="RISK_UP")
+        max_risk = None
+        if "Sharpe" in frontier_weights.columns and "volatility" in frontier_weights.columns:
+            sharpe_series = pd.to_numeric(frontier_weights["Sharpe"], errors="coerce")
+            max_idx = sharpe_series.idxmax()
+            if pd.notna(max_idx):
+                max_risk = pd.to_numeric(frontier_weights.loc[max_idx, "volatility"], errors="coerce")
+        bench_risk = benchmark.get("volatility")
+        risk_up_value = None
+        if max_risk is not None and bench_risk:
+            risk_up_value = (max_risk / bench_risk)
+        risk_cell = ws.cell(row=9, column=start_col + 1, value=risk_up_value)
+        risk_cell.number_format = "0.000"
 
         # Combo chart: bars for SHARP + NORM SHARP, lines for NORM RET + NORM RISK
         id_col = col_map.get("id")
