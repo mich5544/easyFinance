@@ -193,7 +193,7 @@ class PortfolioUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Portfolio Tool - Markowitz Analyzer")
-        self.geometry("1100x720")
+        self.geometry("600x600")
 
         self._images = []
         self.report_paths = {}
@@ -201,157 +201,93 @@ class PortfolioUI(tk.Tk):
         self._build_layout()
 
     def _build_layout(self):
-        notebook = ttk.Notebook(self)
-        notebook.pack(fill="both", expand=True)
-
-        self.inputs_tab = ttk.Frame(notebook)
-        self.results_tab = ttk.Frame(notebook)
-        notebook.add(self.inputs_tab, text="Inputs")
-        notebook.add(self.results_tab, text="Results")
-
+        self.inputs_tab = ttk.Frame(self)
+        self.inputs_tab.pack(fill="both", expand=True)
         self._build_inputs(self.inputs_tab)
-        self._build_results(self.results_tab)
 
     def _build_inputs(self, parent: ttk.Frame):
-        frame = ttk.Frame(parent, padding=12)
+        frame = ttk.Frame(parent, padding=16)
         frame.pack(fill="both", expand=True)
+
+        ttk.Label(frame, text="Asset Selection").pack(anchor="w")
+        top = ttk.Frame(frame)
+        top.pack(fill="x", pady=(4, 12))
+        self.tickers_var = tk.StringVar()
+        ttk.Entry(top, textvariable=self.tickers_var, width=80).pack(side="left", fill="x", expand=True)
+        ttk.Button(top, text="Browse tickers", command=self.open_browse).pack(side="left", padx=8)
+        ttk.Label(frame, text="Yahoo format (e.g. VWCE.DE, BTC-USD)").pack(anchor="w")
+
+        body = ttk.Frame(frame)
+        body.pack(fill="both", expand=True, pady=(12, 0))
+        body.columnconfigure(0, weight=1)
+        body.columnconfigure(1, weight=1)
+
+        left = ttk.LabelFrame(body, text="Market & Risk")
+        right = ttk.LabelFrame(body, text="Simulation & Study")
+        left.grid(row=0, column=0, sticky="nw", padx=(0, 12))
+        right.grid(row=0, column=1, sticky="nw")
 
         row = 0
-        ttk.Label(frame, text="Tickers (comma-separated)").grid(row=row, column=0, sticky="w")
-        self.tickers_var = tk.StringVar()
-        ttk.Entry(frame, textvariable=self.tickers_var, width=50).grid(row=row, column=1, sticky="w")
-        ttk.Button(frame, text="Browse tickers", command=self.open_browse).grid(row=row, column=2, padx=6)
-
-        row += 1
-        ttk.Label(frame, text="Period").grid(row=row, column=0, sticky="w", pady=6)
+        ttk.Label(left, text="Period").grid(row=row, column=0, sticky="w", pady=6)
         self.period_var = tk.StringVar(value="5y")
-        ttk.Combobox(frame, textvariable=self.period_var, values=["1y", "3y", "5y", "max"], state="readonly").grid(
-            row=row, column=1, sticky="w"
-        )
-
+        ttk.Combobox(
+            left, textvariable=self.period_var, values=["1y", "3y", "5y", "max"], state="readonly", width=18
+        ).grid(row=row, column=1, sticky="w")
         row += 1
         self.log_returns_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(frame, text="Log returns", variable=self.log_returns_var).grid(row=row, column=1, sticky="w")
-
+        ttk.Checkbutton(left, text="Log returns", variable=self.log_returns_var).grid(row=row, column=1, sticky="w")
         row += 1
-        ttk.Label(frame, text="Risk-free rate (annual)").grid(row=row, column=0, sticky="w", pady=6)
+        ttk.Label(left, text="Risk-free rate (annual)").grid(row=row, column=0, sticky="w", pady=6)
         self.rf_var = tk.StringVar(value="0.00")
-        ttk.Entry(frame, textvariable=self.rf_var, width=12).grid(row=row, column=1, sticky="w")
-
+        ttk.Entry(left, textvariable=self.rf_var, width=18).grid(row=row, column=1, sticky="w")
         row += 1
-        ttk.Label(frame, text="Capital (0 = skip)").grid(row=row, column=0, sticky="w")
-        self.capital_var = tk.StringVar(value="0")
-        ttk.Entry(frame, textvariable=self.capital_var, width=12).grid(row=row, column=1, sticky="w")
-
-        row += 1
-        ttk.Label(frame, text="Currency").grid(row=row, column=0, sticky="w", pady=6)
+        ttk.Label(left, text="Currency").grid(row=row, column=0, sticky="w", pady=6)
         self.currency_var = tk.StringVar(value="USD")
-        ttk.Entry(frame, textvariable=self.currency_var, width=12).grid(row=row, column=1, sticky="w")
-
+        ttk.Entry(left, textvariable=self.currency_var, width=12).grid(row=row, column=1, sticky="w")
         row += 1
-        ttk.Label(frame, text="Monte Carlo simulations").grid(row=row, column=0, sticky="w")
-        self.mc_var = tk.StringVar(value="20000")
-        ttk.Entry(frame, textvariable=self.mc_var, width=12).grid(row=row, column=1, sticky="w")
-
-        row += 1
-        ttk.Label(frame, text="Benchmark ticker (Yahoo)").grid(row=row, column=0, sticky="w", pady=6)
-        self.benchmark_var = tk.StringVar(value="VWCE.DE")
-        ttk.Entry(frame, textvariable=self.benchmark_var, width=20).grid(row=row, column=1, sticky="w")
-
-        row += 1
-        ttk.Label(frame, text="Min weight").grid(row=row, column=0, sticky="w", pady=6)
+        ttk.Label(left, text="Min weight").grid(row=row, column=0, sticky="w", pady=6)
         self.min_weight_var = tk.StringVar(value="0.03")
-        ttk.Entry(frame, textvariable=self.min_weight_var, width=12).grid(row=row, column=1, sticky="w")
-        ttk.Label(frame, text="Max weight").grid(row=row, column=2, sticky="w", padx=6)
-        self.max_weight_var = tk.StringVar(value="0.25")
-        ttk.Entry(frame, textvariable=self.max_weight_var, width=12).grid(row=row, column=3, sticky="w")
-
+        ttk.Entry(left, textvariable=self.min_weight_var, width=12).grid(row=row, column=1, sticky="w")
         row += 1
-        ttk.Label(frame, text="Max drawdown threshold").grid(row=row, column=0, sticky="w")
+        ttk.Label(left, text="Max weight").grid(row=row, column=0, sticky="w", pady=6)
+        self.max_weight_var = tk.StringVar(value="0.25")
+        ttk.Entry(left, textvariable=self.max_weight_var, width=12).grid(row=row, column=1, sticky="w")
+        row += 1
+        ttk.Label(left, text="Max drawdown threshold").grid(row=row, column=0, sticky="w", pady=6)
         self.max_dd_var = tk.StringVar(value="")
-        ttk.Entry(frame, textvariable=self.max_dd_var, width=12).grid(row=row, column=1, sticky="w")
+        ttk.Entry(left, textvariable=self.max_dd_var, width=12).grid(row=row, column=1, sticky="w")
 
+        row = 0
+        ttk.Label(right, text="Monte Carlo simulations").grid(row=row, column=0, sticky="w", pady=6)
+        self.mc_var = tk.StringVar(value="20000")
+        ttk.Entry(right, textvariable=self.mc_var, width=18).grid(row=row, column=1, sticky="w")
         row += 1
         self.allow_short_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(frame, text="Allow short", variable=self.allow_short_var).grid(row=row, column=1, sticky="w")
-
+        ttk.Checkbutton(right, text="Allow short", variable=self.allow_short_var).grid(row=row, column=1, sticky="w")
         row += 1
-        ttk.Label(frame, text="Study name").grid(row=row, column=0, sticky="w", pady=6)
+        ttk.Label(right, text="Benchmark ticker (Yahoo)").grid(row=row, column=0, sticky="w", pady=6)
+        self.benchmark_var = tk.StringVar(value="VWCE.DE")
+        ttk.Entry(right, textvariable=self.benchmark_var, width=22).grid(row=row, column=1, sticky="w")
+        row += 1
+        ttk.Label(right, text="Study name").grid(row=row, column=0, sticky="w", pady=6)
         self.study_var = tk.StringVar(value="study")
-        ttk.Entry(frame, textvariable=self.study_var, width=20).grid(row=row, column=1, sticky="w")
-
+        ttk.Entry(right, textvariable=self.study_var, width=22).grid(row=row, column=1, sticky="w")
         row += 1
+        ttk.Label(right, text="Capital (0 = skip)").grid(row=row, column=0, sticky="w", pady=6)
+        self.capital_var = tk.StringVar(value="0")
+        ttk.Entry(right, textvariable=self.capital_var, width=18).grid(row=row, column=1, sticky="w")
+
         actions = ttk.Frame(frame)
-        actions.grid(row=row, column=0, columnspan=3, pady=12, sticky="w")
-        ttk.Button(actions, text="Run analysis", command=self.run_analysis).pack(side="left")
-        ttk.Button(actions, text="Load study", command=self.load_study).pack(side="left", padx=6)
+        actions.pack(anchor="w", pady=14)
+        ttk.Button(actions, text="Run analysis", command=self.run_analysis, width=16).pack(side="left")
+        ttk.Button(actions, text="Load study", command=self.load_study, width=14).pack(side="left", padx=8)
+        ttk.Button(actions, text="Save Excel As", command=self.save_excel_as, width=14).pack(side="left")
+        ttk.Button(actions, text="Open Study Folder", command=self.open_study_folder, width=18).pack(
+            side="left", padx=8
+        )
 
-        row += 1
         self.status_var = tk.StringVar(value="Ready")
-        ttk.Label(frame, textvariable=self.status_var, foreground="#0a5").grid(
-            row=row, column=0, columnspan=3, sticky="w"
-        )
-
-    def _build_results(self, parent: ttk.Frame):
-        frame = ttk.Frame(parent, padding=12)
-        frame.pack(fill="both", expand=True)
-
-        results_notebook = ttk.Notebook(frame)
-        results_notebook.pack(fill="both", expand=True)
-
-        summary_tab = ttk.Frame(results_notebook)
-        weights_tab = ttk.Frame(results_notebook)
-        charts_tab = ttk.Frame(results_notebook)
-        results_notebook.add(summary_tab, text="Summary")
-        results_notebook.add(weights_tab, text="Weights")
-        results_notebook.add(charts_tab, text="Charts")
-
-        self.metrics_tree = ttk.Treeview(
-            summary_tab,
-            columns=("min_return", "min_vol", "min_sharpe", "max_return", "max_vol", "max_sharpe"),
-            show="headings",
-        )
-        for col, label in zip(
-            self.metrics_tree["columns"],
-            ["MinVar Return", "MinVar Vol", "MinVar Sharpe", "MaxSharpe Return", "MaxSharpe Vol", "MaxSharpe Sharpe"],
-        ):
-            self.metrics_tree.heading(col, text=label)
-            self.metrics_tree.column(col, width=140, anchor="center")
-        self.metrics_tree.pack(fill="x", pady=6)
-
-        self.benchmark_var_text = tk.StringVar(value="Benchmark: N/A")
-        ttk.Label(summary_tab, textvariable=self.benchmark_var_text, foreground="#a35b00").pack(
-            anchor="w", pady=4
-        )
-
-        self.weights_tree = ttk.Treeview(weights_tab, columns=("ticker", "min_w", "max_w"), show="headings", height=12)
-        for col, label in zip(self.weights_tree["columns"], ["Ticker", "MinVar", "MaxSharpe"]):
-            self.weights_tree.heading(col, text=label)
-            self.weights_tree.column(col, width=140, anchor="center")
-        self.weights_tree.pack(fill="both", expand=True, pady=6)
-
-        charts_notebook = ttk.Notebook(charts_tab)
-        charts_notebook.pack(fill="both", expand=True)
-        self.chart_labels = {}
-        self.chart_paths = {}
-        for key, title in [
-            ("prices", "Prices"),
-            ("correlation", "Correlation"),
-            ("monte_carlo", "Monte Carlo"),
-            ("frontier", "Frontier"),
-        ]:
-            tab = ttk.Frame(charts_notebook)
-            charts_notebook.add(tab, text=title)
-            lbl = ttk.Label(tab, anchor="center")
-            lbl.pack(fill="both", expand=True, padx=6, pady=6)
-            self.chart_labels[key] = lbl
-
-        charts_tab.bind("<Configure>", lambda _evt: self._refresh_charts())
-
-        buttons = ttk.Frame(frame)
-        buttons.pack(fill="x", pady=8)
-        ttk.Button(buttons, text="Save Excel As", command=self.save_excel_as).pack(side="left")
-        ttk.Button(buttons, text="Open Study Folder", command=self.open_study_folder).pack(side="left", padx=6)
+        ttk.Label(frame, textvariable=self.status_var, foreground="#0a5").pack(anchor="w")
 
     def open_browse(self):
         BrowseDialog(self, self.add_tickers)
@@ -452,82 +388,11 @@ class PortfolioUI(tk.Tk):
         threading.Thread(target=task, daemon=True).start()
 
     def _update_results(self, result):
-        self._clear_results()
-        min_perf = result["min_variance"].performance
-        max_perf = result["max_sharpe"].performance
-        self.metrics_tree.insert(
-            "",
-            "end",
-            values=(
-                f"{min_perf['return']:.4f}",
-                f"{min_perf['volatility']:.4f}",
-                f"{min_perf['sharpe']:.4f}",
-                f"{max_perf['return']:.4f}",
-                f"{max_perf['volatility']:.4f}",
-                f"{max_perf['sharpe']:.4f}",
-            ),
-        )
-
-        w_min = result["min_variance"].weights
-        w_max = result["max_sharpe"].weights
-        for ticker, wm, wx in zip(result["tickers"], w_min, w_max):
-            self.weights_tree.insert("", "end", values=(ticker, f"{wm:.4f}", f"{wx:.4f}"))
-
-        benchmark = result.get("benchmark") or {}
-        if benchmark.get("status") == "OK":
-            self.benchmark_var_text.set(
-                "Benchmark {} | Return {:.4f} | Vol {:.4f} | Sharpe {:.4f}".format(
-                    benchmark.get("ticker"),
-                    benchmark.get("return", 0.0),
-                    benchmark.get("volatility", 0.0),
-                    benchmark.get("sharpe", 0.0),
-                )
-            )
-        else:
-            self.benchmark_var_text.set(
-                f"Benchmark {benchmark.get('ticker', '')}: {benchmark.get('status', 'N/A')}"
-            )
-
-        figures = result["report_paths"].get("figures", {})
-        self.chart_paths = figures
-        self._refresh_charts()
         self.report_paths = result["report_paths"]
 
     def _clear_results(self):
-        for tree in (self.metrics_tree, self.weights_tree):
-            for row in tree.get_children():
-                tree.delete(row)
-        for lbl in self.chart_labels.values():
-            lbl.configure(image="")
         self._images = []
-        self.chart_paths = {}
-
-    def _refresh_charts(self):
-        if not self.chart_paths:
-            return
-        self._images = []
-        for key, lbl in self.chart_labels.items():
-            path = self.chart_paths.get(key)
-            if not path:
-                continue
-            self._set_chart_image(lbl, path)
-
-    def _set_chart_image(self, label: ttk.Label, path: str) -> None:
-        try:
-            img = tk.PhotoImage(file=path)
-        except tk.TclError:
-            logger.warning("Failed to load image: %s", path)
-            return
-
-        target_w = max(480, label.winfo_width())
-        target_h = max(320, label.winfo_height())
-        scale_w = max(1, int(img.width() / target_w))
-        scale_h = max(1, int(img.height() / target_h))
-        scale = max(scale_w, scale_h)
-        if scale > 1:
-            img = img.subsample(scale, scale)
-        label.configure(image=img)
-        self._images.append(img)
+        self.report_paths = {}
 
     def save_excel_as(self):
         excel_path = self.report_paths.get("excel")
