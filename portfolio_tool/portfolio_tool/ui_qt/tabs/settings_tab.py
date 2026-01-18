@@ -8,8 +8,10 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QSpinBox,
     QVBoxLayout,
     QWidget,
@@ -20,8 +22,10 @@ from ...utils import normalize_tickers
 
 
 class SettingsTab(QWidget):
-    def __init__(self, parent=None) -> None:
+    def __init__(self, open_excel_callback, open_folder_callback, parent=None) -> None:
         super().__init__(parent)
+        self._open_excel = open_excel_callback
+        self._open_folder = open_folder_callback
 
         self.tickers_input = QLineEdit()
         self.tickers_input.setPlaceholderText("SPY, QQQ, VWCE.DE")
@@ -93,7 +97,20 @@ class SettingsTab(QWidget):
         grid.addWidget(self.benchmark, 1, 1)
         grid.addWidget(study_group, 2, 0, 1, 2)
 
+        output_box = QGroupBox("Outputs")
+        out_layout = QHBoxLayout(output_box)
+        open_excel = QPushButton("Open Excel")
+        open_folder = QPushButton("Open folder")
+        open_excel.setObjectName("secondary")
+        open_folder.setObjectName("secondary")
+        open_excel.clicked.connect(self._open_excel)
+        open_folder.clicked.connect(self._open_folder)
+        out_layout.addStretch(1)
+        out_layout.addWidget(open_excel)
+        out_layout.addWidget(open_folder)
+
         layout.addLayout(grid)
+        layout.addWidget(output_box)
         layout.addStretch(1)
 
     def build_config(self) -> dict:
