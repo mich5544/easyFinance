@@ -5,3 +5,5 @@ studies/
 *.png
 *.xlsx
 ASSETS.txt
+.env
+\.env
