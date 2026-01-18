@@ -190,5 +190,29 @@
     "source": "DIRECT",
     "exchange": "",
     "currency": ""
+  },
+  "SXRV.DE": {
+    "yahoo_symbol": "SXRV.DE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "CNDX.L": {
+    "yahoo_symbol": "CNDX.L",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "XNAS.DE": {
+    "yahoo_symbol": "XNAS.DE",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
+  },
+  "QQQM": {
+    "yahoo_symbol": "QQQM",
+    "source": "DIRECT",
+    "exchange": "",
+    "currency": ""
   }
 }

@@ -5,3 +5,5 @@ scipy
 matplotlib
 openpyxl
 rich
+PySide6
+PySide6
