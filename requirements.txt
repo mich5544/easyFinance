@@ -6,4 +6,6 @@ matplotlib
 openpyxl
 rich
 PySide6
+openai
+python-dotenv
 PySide6

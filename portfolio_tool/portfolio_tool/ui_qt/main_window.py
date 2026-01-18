@@ -20,9 +20,12 @@ from PySide6.QtWidgets import (
 )
 
 from .. import data as data_module
+from ..ai.insights import comment_study, compare_to_benchmark
+from ..ai.openai_client import OpenAIClient
 from ..main import StudyError, run_study
 from ..symbol_resolver import resolve_symbols
 from ..utils import normalize_tickers
+from .tabs.ai_tab import AITab
 from .tabs.settings_tab import SettingsTab
 from .tabs.summary_tab import ResultsTab
 from .theme import DARK_QSS, LIGHT_QSS
@@ -120,13 +123,22 @@ class MainWindow(QMainWindow):
         self._horizon_thread: QThread | None = None
         self._horizon_worker: HorizonWorker | None = None
         self._latest_result: Dict | None = None
+        self._last_config: Dict | None = None
+        self._ai_thread: QThread | None = None
+        self._ai_worker: _AIWorker | None = None
 
         self.settings_tab = SettingsTab(self)
         self.results_tab = ResultsTab(self._open_excel, self._open_folder, self)
+        self.ai_tab = AITab(
+            self._generate_study_insight,
+            self._generate_benchmark_insight,
+            self,
+        )
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self.settings_tab, "Study Setup")
         self.tabs.addTab(self.results_tab, "Results")
+        self.tabs.addTab(self.ai_tab, "AI Assistant")
 
         title = QLabel("Portfolio Tool (Markowitz)")
         title.setStyleSheet("font-size: 18px; font-weight: bold;")
@@ -154,6 +166,7 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status)
         self.status.showMessage("Ready")
         self._apply_theme(self.theme_combo.currentText())
+        self.ai_tab.set_buttons_enabled(False)
 
     def _open_excel(self) -> None:
         if not self._latest_result:
@@ -182,7 +195,9 @@ class MainWindow(QMainWindow):
     def _reset_results(self) -> None:
         self._latest_result = None
         self.results_tab.clear()
-        # Details tab removed.
+        self._last_config = None
+        self.ai_tab.set_buttons_enabled(False)
+        self.ai_tab.set_text("")
 
     def run_study(self) -> None:
         try:
@@ -192,6 +207,7 @@ class MainWindow(QMainWindow):
             return
 
         self._reset_results()
+        self._last_config = config
         self.run_button.setEnabled(False)
         self.status.showMessage("Starting...")
         self._start_horizon_check(config)
@@ -203,6 +219,7 @@ class MainWindow(QMainWindow):
         # Details tab removed.
         self.run_button.setEnabled(True)
         self.status.showMessage("Study completed.")
+        self.ai_tab.set_buttons_enabled(True)
 
         benchmark = result.get("benchmark") or {}
         status = benchmark.get("status")
@@ -268,6 +285,7 @@ class MainWindow(QMainWindow):
             ]
             config["tickers"] = ", ".join([a["user_symbol"] for a in remaining])
 
+        self._last_config = config
         self._start_run_worker(config)
 
     def _start_run_worker(self, config: Dict) -> None:
@@ -292,3 +310,109 @@ class MainWindow(QMainWindow):
     def _apply_theme(self, theme: str) -> None:
         qss = LIGHT_QSS if theme == "Light" else DARK_QSS
         self.setStyleSheet(qss)
+
+    def _generate_study_insight(self) -> None:
+        if not self._latest_result or not self._last_config:
+            QMessageBox.information(self, "Info", "Run a study first.")
+            return
+        self._start_ai_worker(mode="study")
+
+    def _generate_benchmark_insight(self) -> None:
+        if not self._latest_result or not self._last_config:
+            QMessageBox.information(self, "Info", "Run a study first.")
+            return
+        self._start_ai_worker(mode="benchmark")
+
+    def _start_ai_worker(self, mode: str) -> None:
+        client = OpenAIClient()
+        if not client.is_configured():
+            QMessageBox.warning(self, "OpenAI", "OPENAI_API_KEY not set.")
+            return
+
+        self.ai_tab.set_text("Generating AI insight...")
+        self.ai_tab.set_buttons_enabled(False)
+        self.ai_tab.set_text("Generating AI insight...")
+        self.status.showMessage("Generating AI insight...")
+
+        def task() -> dict:
+            result = self._latest_result or {}
+            config = self._last_config or {}
+            assets = result.get("tickers", [])
+            min_perf = result.get("min_variance", {}).performance
+            max_perf = result.get("max_sharpe", {}).performance
+            benchmark = result.get("benchmark", {})
+            constraints = {
+                "min_weight": config.get("min_weight"),
+                "max_weight": config.get("max_weight"),
+                "allow_short": config.get("allow_short"),
+                "weight_bounds_enabled": config.get("weight_bounds_enabled"),
+                "mc_sims": config.get("mc_sims"),
+                "period": config.get("period"),
+            }
+            if mode == "benchmark":
+                return compare_to_benchmark(
+                    client,
+                    portfolio=max_perf,
+                    benchmark=benchmark,
+                )
+            return comment_study(
+                client,
+                assets=assets,
+                min_var=min_perf,
+                max_sharpe=max_perf,
+                benchmark=benchmark,
+                constraints=constraints,
+            )
+
+        thread = QThread(self)
+        worker = _AIWorker(task)
+        worker.moveToThread(thread)
+        thread.started.connect(worker.run)
+        worker.finished.connect(self._handle_ai_finished)
+        worker.error.connect(self._handle_ai_error)
+        worker.finished.connect(thread.quit)
+        worker.error.connect(thread.quit)
+        worker.finished.connect(worker.deleteLater)
+        worker.error.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+
+        self._ai_worker = worker
+        self._ai_thread = thread
+        thread.finished.connect(self._clear_ai_worker)
+        thread.start()
+
+    @Slot(dict)
+    def _handle_ai_finished(self, payload: Dict) -> None:
+        text = payload.get("text") or "No response."
+        self.ai_tab.set_text(text)
+        self.status.showMessage("AI insight ready.")
+        self.ai_tab.set_buttons_enabled(True)
+
+    @Slot(str)
+    def _handle_ai_error(self, message: str) -> None:
+        self.ai_tab.set_text(f"AI error: {message}")
+        self.status.showMessage("AI insight failed.")
+        self.ai_tab.set_buttons_enabled(True)
+
+    def _clear_ai_worker(self) -> None:
+        self._ai_worker = None
+
+
+class _AIWorker(QObject):
+    finished = Signal(dict)
+    error = Signal(str)
+
+    def __init__(self, task_fn):
+        super().__init__()
+        self._task_fn = task_fn
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            result = self._task_fn()
+            if result.get("error"):
+                self.error.emit(result["error"])
+                return
+            self.finished.emit(result)
+        except Exception as exc:  # noqa: BLE001
+            self.error.emit(str(exc))

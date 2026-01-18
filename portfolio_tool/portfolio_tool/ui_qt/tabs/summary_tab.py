@@ -5,6 +5,7 @@ from typing import Dict
 
 from PySide6.QtWidgets import (
     QFormLayout,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -18,7 +19,12 @@ from ..widgets.table_model import SimpleTableModel
 
 
 class ResultsTab(QWidget):
-    def __init__(self, open_excel_callback, open_folder_callback, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        open_excel_callback,
+        open_folder_callback,
+        parent: QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
         self._open_excel = open_excel_callback
         self._open_folder = open_folder_callback
@@ -54,6 +60,7 @@ class ResultsTab(QWidget):
         self.allocation_table.setSelectionMode(QTableView.SingleSelection)
         self.allocation_table.horizontalHeader().setStretchLastSection(True)
         self.allocation_table.verticalHeader().setVisible(False)
+        self.allocation_table.setMinimumHeight(180)
 
         allocation_box = QGroupBox("Allocations (compact)")
         allocation_layout = QVBoxLayout(allocation_box)
@@ -71,6 +78,7 @@ class ResultsTab(QWidget):
         self.benchmark_table.setSelectionMode(QTableView.SingleSelection)
         self.benchmark_table.horizontalHeader().setStretchLastSection(True)
         self.benchmark_table.verticalHeader().setVisible(False)
+        self.benchmark_table.setMinimumHeight(150)
 
         benchmark_box = QGroupBox("Benchmark Comparison")
         bench_layout = QVBoxLayout(benchmark_box)
@@ -90,18 +98,20 @@ class ResultsTab(QWidget):
         out_layout.addRow("Excel path", self.excel_path_label)
         out_layout.addRow("Study folder", self.output_folder_label)
         buttons = QHBoxLayout()
+        buttons.addStretch(1)
         buttons.addWidget(open_excel)
         buttons.addWidget(open_folder)
         out_layout.addRow("", buttons)
 
-        layout = QVBoxLayout(self)
+        layout = QGridLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
-        layout.setSpacing(12)
-        layout.addWidget(perf_box)
-        layout.addWidget(benchmark_box)
-        layout.addWidget(allocation_box)
-        layout.addWidget(output_box)
-        layout.addStretch(1)
+        layout.setHorizontalSpacing(16)
+        layout.setVerticalSpacing(12)
+        layout.addWidget(perf_box, 0, 0)
+        layout.addWidget(benchmark_box, 1, 0)
+        layout.addWidget(allocation_box, 0, 1)
+        layout.addWidget(output_box, 2, 0, 1, 2)
+        layout.setRowStretch(3, 1)
 
     def clear(self) -> None:
         for label in (
